@@ -2,11 +2,12 @@
 
 module Lib
     ( someFunc
-    , Market(..)
+    , OptionMarket(..)
 
     ) where
 
 import qualified Numeric.Integration.TanhSinh as NI
+import qualified Data.Time.Clock as TC
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -27,16 +28,17 @@ volatilityToDouble (Volatility d) = d
 
 
 
-class Market a where
-    interestRate :: a -> InterestRate
-    underlying   :: a -> Price
-    volatility :: a -> Volatility
+class OptionMarket a where
+    interestRate :: a -> TC.DiffTime -> InterestRate
+    underlying   :: a -> TC.DiffTime -> Price
+    volatility :: a -> TC.DiffTime -> Volatility
 
-    optionPrice :: a -> (Double -> Double) -> Double -> Double
-    optionPrice m payout tau =
-        let !r           = (interestRateToDouble . interestRate) m
-            !x           = (priceToDouble . underlying) m
-            !sigma       = (volatilityToDouble . volatility) m
+    europeanOptionPrice :: a -> (Double -> Double) -> TC.DiffTime -> Double
+    europeanOptionPrice m payout t =
+        let !r           = (interestRateToDouble . interestRate m) t
+            !x           = (priceToDouble . underlying m)  t
+            !sigma       = (volatilityToDouble . volatility m) t
+            !tau         = (fromIntegral . toInteger) t / (360 * 24 * 3600)
             f y         = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2))
             !result      = NI.everywhere NI.trap f
             (!low, !high) = (NI.confidence . NI.absolute 6.0e-10) result
