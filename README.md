@@ -1,1 +1,1 @@
-# GHC-Pricer
+# ghc-pricer

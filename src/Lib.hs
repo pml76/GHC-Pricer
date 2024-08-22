@@ -1,28 +1,19 @@
 module Lib
-    ( someFunc,
-      priceEuropeanCall,
-      Strike(..),
-      Underlying(..),
-      Price(..)
+    ( someFunc
+    , calcPrice
+
     ) where
 
-import qualified Statistics.Distribution.Normal as Normal
-import qualified Data.Time.Clock as Clock
-
-newtype Strike = Strike Double
-newtype Underlying = Underlying Double
-newtype Price = Price Double
-newtype InterestRate = InterestRate Double
-
-priceEuropeanCall :: Normal.NormalDistribution -> Clock.NominalDiffTime -> Strike -> Underlying -> InterestRate -> Price
-priceEuropeanCall distr diffTime strike underlying interestRate =
-  let (Strike k) = strike
-      (Underlying s) = underlying
-      (InterestRate r) = interestRate
-      d1 = log (s/k)
-   in Price d1
-
-
+import qualified Numeric.Integration.TanhSinh as NI
+import qualified Statistics.Distribution as SD
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
+
+calcPrice :: (Double -> Double) -> Double
+calcPrice payout = 
+    let f x         = (payout x) * SD.normal  
+        r           = NI.nonNegative NI.trap f
+        (low, high) = (NI.confidence . NI.absolute 6.0e-10) r
+    in (low + high) / 2
+             
