@@ -1,4 +1,4 @@
-# Changelog for `ghc-pricer`
+# Changelog for `GHC-Pricer`
 
 All notable changes to this project will be documented in this file.
 

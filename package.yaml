@@ -1,6 +1,6 @@
-name:                ghc-pricer
+name:                GHC-Pricer
 version:             0.1.0.0
-github:              "githubuser/ghc-pricer"
+github:              "githubuser/GHC-Pricer"
 license:             BSD-3-Clause
 author:              "Author name here"
 maintainer:          "example@example.com"
@@ -17,12 +17,10 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/ghc-pricer#readme>
+description:         Please see the README on GitHub at <https://github.com/githubuser/GHC-Pricer#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- integration
-- statistics 
 
 ghc-options:
 - -Wall
@@ -39,7 +37,7 @@ library:
   source-dirs: src
 
 executables:
-  ghc-pricer-exe:
+  GHC-Pricer-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -47,10 +45,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - ghc-pricer
+    - GHC-Pricer
 
 tests:
-  ghc-pricer-test:
+  GHC-Pricer-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -58,4 +56,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - ghc-pricer
+    - GHC-Pricer
