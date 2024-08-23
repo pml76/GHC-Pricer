@@ -1,6 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE QuantifiedConstraints #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use <&>" #-}
 
 module Lib
     ( someFunc
@@ -104,13 +106,13 @@ class (forall m. Monad m) => OptionMarket a where
     volatility   :: EuropeanOptionDateInfo d => a -> d -> m Volatility
 
     europeanOptionPrice :: EuropeanOptionDateInfo d => a -> (Double -> Double) -> d -> m Double
-    europeanOptionPrice m payout d =
-        let !r           = (interestRateToDouble . interestRate m) d
-            !x           = (priceToDouble . underlying m)  d
-            !sigma       = (volatilityToDouble . volatility m) d
-            !tau         = yearsToMaturity d
+    europeanOptionPrice m payout d = do 
+        !r      <- interestRate m d >>= return . interestRateToDouble 
+        !x      <- underlying m d >>= return . priceToDouble 
+        !sigma  <- volatility m d >>= return . volatilityToDouble
+        let !tau = yearsToMaturity d 
             f y          = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2)) / sqrt (2 * pi)
             !result      = NI.everywhere NI.trap f
             (!low, !high) = (NI.confidence . NI.absolute 6.0e-10) result
-        in (low + high) / 2
+        return $ (low + high) / 2
 
