@@ -10,7 +10,7 @@ module Lib
     ) where
 
 import qualified Numeric.Integration.TanhSinh as NI
-import Data.Time 
+import Data.Time
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -30,7 +30,7 @@ volatilityToDouble :: Volatility -> Double
 volatilityToDouble (Volatility d) = d
 
 
-class EuropeanOptionDateInfo d where 
+class EuropeanOptionDateInfo d where
     tradeDate :: d -> Day
     maturity :: d -> Day
     maturityPayDate  :: d -> Day
@@ -40,22 +40,38 @@ class EuropeanOptionDateInfo d where
     yearsToMaturityPayDate :: d -> Double
     yearsToPremiumPayDate :: d -> Day
 
-class EuropeanOptionDateInfo d => AsianOptionDateInfo d where 
+class EuropeanOptionDateInfo d => AsianOptionDateInfo d where
     beginPeriod :: d -> Day
-    endPeriod :: d -> Day 
+    endPeriod :: d -> Day
     endPeriod = maturity
 
-    yearsToPeriodBegin :: d -> Double 
+    yearsToPeriodBegin :: d -> Double
     yearsToPeriodBegin = yearsToMaturity
 
-    yearsToPeriodEnd :: d -> Double 
+    yearsToPeriodEnd :: d -> Double
     yearsInPeriod :: d -> Double
 
 data Act360AsianOptionDateData = Act360AsianOptionDateData {
       tradeDate_ :: Day
-    , maturity_ :: Day 
-    , 
+    , maturity_ :: Day
+    , beginPeriod_ :: Day
+    , maturityPayDate_ :: Day 
+    , premiumPayDate_ :: Day
 }
+
+
+act360TimeDifferenceInYears :: Day -> Day -> Double 
+act360TimeDifferenceInYears d1 d2 =
+
+    
+instance EuropeanOptionDateInfo Act360AsianOptionDateData where
+
+    tradeDate = tradeDate_
+    maturity = maturity_
+    maturityPayDate = maturityPayDate_
+    premiumPayDate = premiumPayDate_
+
+    yearsToMaturity d = act360TimeDifferenceInYears tradeDate_ maturity_
 
 
 class OptionMarket a where
