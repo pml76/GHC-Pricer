@@ -3,11 +3,13 @@
 module Lib
     ( someFunc
     , OptionMarket(..)
+    , EuropeanOptionDateInfo(..)
+    , AsianOptionDateInfo(..)
 
     ) where
 
 import qualified Numeric.Integration.TanhSinh as NI
-import qualified Data.Time.Clock as TC
+import Data.Time 
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -15,6 +17,7 @@ someFunc = putStrLn "someFunc"
 newtype InterestRate = InterestRate Double
 newtype Price = Price Double
 newtype Volatility = Volatility Double
+
 
 priceToDouble :: Price -> Double
 priceToDouble (Price d) = d
@@ -26,20 +29,40 @@ volatilityToDouble :: Volatility -> Double
 volatilityToDouble (Volatility d) = d
 
 
+class EuropeanOptionDateInfo d where 
+    tradeDate :: d -> Day
+    maturity :: d -> Day
+    maturityPayDate  :: d -> Day
+    premiumPayDate :: d -> Day
+
+    yearsToMaturity :: d -> Double
+    yearsToMaturityPayDate :: d -> Double
+    yearsToPremiumPayDate :: d -> Day
+
+class EuropeanOptionDateInfo d => AsianOptionDateInfo d where 
+    beginPeriod :: d -> Day
+    endPeriod :: d -> Day 
+    endPeriod = maturity
+
+    yearsToPeriodBegin :: d -> Double 
+    yearsToPeriodBegin = yearsToMaturity
+
+    yearsToPeriodEnd :: d -> Double 
+    yearsInPeriod :: d -> Double
 
 
 class OptionMarket a where
-    interestRate :: a -> TC.DiffTime -> InterestRate
-    underlying   :: a -> TC.DiffTime -> Price
-    volatility :: a -> TC.DiffTime -> Volatility
+    interestRate :: EuropeanOptionDateInfo d => a -> d -> InterestRate
+    underlying   :: EuropeanOptionDateInfo d => a -> d -> Price
+    volatility   :: EuropeanOptionDateInfo d => a -> d -> Volatility
 
-    europeanOptionPrice :: a -> (Double -> Double) -> TC.DiffTime -> Double
-    europeanOptionPrice m payout t =
-        let !r           = (interestRateToDouble . interestRate m) t
-            !x           = (priceToDouble . underlying m)  t
-            !sigma       = (volatilityToDouble . volatility m) t
-            !tau         = (fromIntegral . toInteger) t / (360 * 24 * 3600)
-            f y         = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2))
+    europeanOptionPrice :: EuropeanOptionDateInfo d => a -> (Double -> Double) -> d -> Double
+    europeanOptionPrice m payout d =
+        let !r           = (interestRateToDouble . interestRate m) d
+            !x           = (priceToDouble . underlying m)  d
+            !sigma       = (volatilityToDouble . volatility m) d
+            !tau         = yearsToMaturity d
+            f y          = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2))
             !result      = NI.everywhere NI.trap f
             (!low, !high) = (NI.confidence . NI.absolute 6.0e-10) result
         in (low + high) / 2
