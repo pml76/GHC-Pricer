@@ -11,6 +11,8 @@ module Lib
 
 import qualified Numeric.Integration.TanhSinh as NI
 import Data.Time
+import Data.Time.Calendar.Julian (toJulian)
+import GHC.Float (integerToDouble#)
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -61,9 +63,10 @@ data Act360AsianOptionDateData = Act360AsianOptionDateData {
 
 
 act360TimeDifferenceInYears :: Day -> Day -> Double 
-act360TimeDifferenceInYears d1 d2 =
+act360TimeDifferenceInYears d1 d2 = 
+    (fromInteger $ toModifiedJulianDay d2 - toModifiedJulianDay d1 + 1) / 360
 
-    
+
 instance EuropeanOptionDateInfo Act360AsianOptionDateData where
 
     tradeDate = tradeDate_
