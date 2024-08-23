@@ -1,4 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 
 module Lib
     ( someFunc
@@ -11,8 +13,7 @@ module Lib
 
 import qualified Numeric.Integration.TanhSinh as NI
 import Data.Time
-import Data.Time.Calendar.Julian (toJulian)
-import GHC.Float (integerToDouble#)
+
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -40,7 +41,7 @@ class EuropeanOptionDateInfo d where
 
     yearsToMaturity :: d -> Double
     yearsToMaturityPayDate :: d -> Double
-    yearsToPremiumPayDate :: d -> Day
+    yearsToPremiumPayDate :: d -> Double
 
 class EuropeanOptionDateInfo d => AsianOptionDateInfo d where
 
@@ -53,46 +54,56 @@ class EuropeanOptionDateInfo d => AsianOptionDateInfo d where
 
     -- |The length of the time window between 'tradeDate d' (including) and the 'beginPeriod d' (excluding) in years
     yearsToBeginPeriod :: d -> Double
-    yearsToBeginPeriod = yearsToMaturity
+
 
     -- |The length of the time window between 'tradeDate d' (including) and 'endPeriod d' (excluding) in years
-    yearsToEndPeriod :: d -> Double 
+    yearsToEndPeriod :: d -> Double
+    yearsToEndPeriod = yearsToMaturity
 
     -- |The length of the time window between 'beginPeriod d' (including) and 'endPeriod d' (excluding) in years 
-    yearsInPeriod :: d -> Double  
+    yearsInPeriod :: d -> Double
 
 data Act360AsianOptionDateData = Act360AsianOptionDateData {
       tradeDate_ :: Day
     , maturity_ :: Day
     , beginPeriod_ :: Day
-    , maturityPayDate_ :: Day 
+    , maturityPayDate_ :: Day
     , premiumPayDate_ :: Day
 }
 
 
 -- |Compute the time difference between d1 (including) and d2 (excluding) in years according to the Act/360 convention. 
 -- When 'd1' lies before 'd2' the result is positive. 
-act360TimeDifferenceInYears :: Day -> Day -> Double 
-act360TimeDifferenceInYears d1 d2 = 
-    (fromInteger $ toModifiedJulianDay d2 - toModifiedJulianDay d1) / 360
+act360TimeDifferenceInYears :: Day -> Day -> Double
+act360TimeDifferenceInYears d1 d2 =
+    fromInteger (toModifiedJulianDay d2 - toModifiedJulianDay d1) / 360
 
 
 instance EuropeanOptionDateInfo Act360AsianOptionDateData where
-
     tradeDate = tradeDate_
     maturity = maturity_
     maturityPayDate = maturityPayDate_
     premiumPayDate = premiumPayDate_
 
-    yearsToMaturity d = act360TimeDifferenceInYears tradeDate_ maturity_
+    yearsToMaturity d = act360TimeDifferenceInYears (tradeDate d) (maturity d)
+    yearsToMaturityPayDate d = act360TimeDifferenceInYears (tradeDate d) (maturityPayDate d)
+    yearsToPremiumPayDate d = act360TimeDifferenceInYears (tradeDate d) (premiumPayDate d)
+
+instance AsianOptionDateInfo Act360AsianOptionDateData where
+    beginPeriod = beginPeriod_
+
+    yearsToBeginPeriod d = act360TimeDifferenceInYears (tradeDate d) (beginPeriod d)
+
+    yearsInPeriod d = act360TimeDifferenceInYears (beginPeriod d) (endPeriod d)
 
 
-class OptionMarket a where
-    interestRate :: EuropeanOptionDateInfo d => a -> d -> InterestRate
-    underlying   :: EuropeanOptionDateInfo d => a -> d -> Price
-    volatility   :: EuropeanOptionDateInfo d => a -> d -> Volatility
 
-    europeanOptionPrice :: EuropeanOptionDateInfo d => a -> (Double -> Double) -> d -> Double
+class (forall m. Monad m) => OptionMarket a where
+    interestRate :: EuropeanOptionDateInfo d => a -> d -> m InterestRate
+    underlying   :: EuropeanOptionDateInfo d => a -> d -> m Price
+    volatility   :: EuropeanOptionDateInfo d => a -> d -> m Volatility
+
+    europeanOptionPrice :: EuropeanOptionDateInfo d => a -> (Double -> Double) -> d -> m Double
     europeanOptionPrice m payout d =
         let !r           = (interestRateToDouble . interestRate m) d
             !x           = (priceToDouble . underlying m)  d
