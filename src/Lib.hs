@@ -5,6 +5,7 @@ module Lib
     , OptionMarket(..)
     , EuropeanOptionDateInfo(..)
     , AsianOptionDateInfo(..)
+    , Act360AsianOptionDateData(..)
 
     ) where
 
@@ -49,6 +50,12 @@ class EuropeanOptionDateInfo d => AsianOptionDateInfo d where
 
     yearsToPeriodEnd :: d -> Double 
     yearsInPeriod :: d -> Double
+
+data Act360AsianOptionDateData = Act360AsianOptionDateData {
+      tradeDate_ :: Day
+    , maturity_ :: Day 
+    , 
+}
 
 
 class OptionMarket a where
