@@ -70,6 +70,8 @@ data Act360AsianOptionDateData = Act360AsianOptionDateData {
 }
 
 
+-- |Compute the time difference between d1 (including) and d2 (excluding) in years according to the Act/360 convention. 
+-- When 'd1' lies before 'd2' the result is positive. 
 act360TimeDifferenceInYears :: Day -> Day -> Double 
 act360TimeDifferenceInYears d1 d2 = 
     (fromInteger $ toModifiedJulianDay d2 - toModifiedJulianDay d1) / 360
