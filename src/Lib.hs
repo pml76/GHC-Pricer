@@ -88,7 +88,7 @@ class OptionMarket a where
             !x           = (priceToDouble . underlying m)  d
             !sigma       = (volatilityToDouble . volatility m) d
             !tau         = yearsToMaturity d
-            f y          = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2))
+            f y          = x * exp ( - (tau * r) ) * (payout . exp) ( - (sigma * sqrt tau * y) + (r-sigma*sigma/2)*tau) * exp (- (y * y / 2)) / sqrt (2 * pi)
             !result      = NI.everywhere NI.trap f
             (!low, !high) = (NI.confidence . NI.absolute 6.0e-10) result
         in (low + high) / 2
