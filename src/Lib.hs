@@ -43,15 +43,23 @@ class EuropeanOptionDateInfo d where
     yearsToPremiumPayDate :: d -> Day
 
 class EuropeanOptionDateInfo d => AsianOptionDateInfo d where
+
+    -- |The begin of the maturity-period of the option (including)
     beginPeriod :: d -> Day
+
+    -- |The end of the maturity period of the option (excluding)
     endPeriod :: d -> Day
     endPeriod = maturity
 
-    yearsToPeriodBegin :: d -> Double
-    yearsToPeriodBegin = yearsToMaturity
+    -- |The length of the time window between 'tradeDate d' (including) and the 'beginPeriod d' (excluding) in years
+    yearsToBeginPeriod :: d -> Double
+    yearsToBeginPeriod = yearsToMaturity
 
-    yearsToPeriodEnd :: d -> Double
-    yearsInPeriod :: d -> Double
+    -- |The length of the time window between 'tradeDate d' (including) and 'endPeriod d' (excluding) in years
+    yearsToEndPeriod :: d -> Double 
+
+    -- |The length of the time window between 'beginPeriod d' (including) and 'endPeriod d' (excluding) in years 
+    yearsInPeriod :: d -> Double  
 
 data Act360AsianOptionDateData = Act360AsianOptionDateData {
       tradeDate_ :: Day
@@ -64,7 +72,7 @@ data Act360AsianOptionDateData = Act360AsianOptionDateData {
 
 act360TimeDifferenceInYears :: Day -> Day -> Double 
 act360TimeDifferenceInYears d1 d2 = 
-    (fromInteger $ toModifiedJulianDay d2 - toModifiedJulianDay d1 + 1) / 360
+    (fromInteger $ toModifiedJulianDay d2 - toModifiedJulianDay d1) / 360
 
 
 instance EuropeanOptionDateInfo Act360AsianOptionDateData where
